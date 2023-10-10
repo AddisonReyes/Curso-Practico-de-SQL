@@ -1,6 +1,5 @@
 /*
 	Todos los querys del curso 'Curso Práctico de SQL' de Platzi, clases y ejercicios.
-	~Addison Reyes
 */
 
 
@@ -36,7 +35,6 @@ SELECT * FROM (
 	FROM platzi.alumnos
 ) AS alumnos_with_row_num 
 WHERE row_id < 6;
-
 
 
 
@@ -78,7 +76,6 @@ WHERE colegiatura = (
 
 
 --Ejercicio
-
 --Mi solucion
 SELECT id, *
 FROM platzi.alumnos
@@ -93,6 +90,7 @@ OFFSET(
 	SELECT COUNT(*)/2
 	FROM platzi.alumnos
 );
+
 
 
 --Clase #3 "Seleccionar de un set de opciones"
@@ -131,7 +129,6 @@ WHERE id NOT IN (
 );
 
 
-
 --Clase #4 "En mis tiempos"
 SELECT EXTRACT (YEAR FROM fecha_incorporacion) AS anio_incorporacion
 FROM platzi.alumnos
@@ -158,7 +155,6 @@ FROM platzi.alumnos;
 
 
 
-
 --Clase #5 "Seleccionar por año"
 SELECT *
 FROM platzi.alumnos
@@ -178,7 +174,6 @@ WHERE anio_incorporacion = 2020;
 
 
 --Ejercicios
-
 --Mi solucion
 SELECT *
 FROM platzi.alumnos
@@ -194,7 +189,6 @@ FROM (
 ) AS alumnos_con_anio
 WHERE anio_incorporacion = 2018
 AND mes_incorporacion = 5;
-
 
 
 --Clase #6 "Duplicados"
@@ -304,7 +298,6 @@ WHERE id IN (
 
 
 
-
 --Clase #7 "Selectores de rango"
 SELECT *
 FROM platzi.alumnos
@@ -351,7 +344,6 @@ SELECT numrange(
 )
 
 
-
 --Clase #8 "Eres lo máximo"
 SELECT fecha_incorporacion
 FROM platzi.alumnos
@@ -381,7 +373,6 @@ ORDER BY tutor_id
 
 
 
-
 --Clase #9 "Egoísta (selfish)"
 SELECT 
 	CONCAT(a.nombre, ' ', a.apellido) AS alumno, 
@@ -408,7 +399,6 @@ FROM (
 		INNER JOIN platzi.alumnos AS t ON a.tutor_id = t.id
 	GROUP BY tutor
 ) AS alumnos_tutor;
-
 
 
 --Clase #10 "Resolviendo diferencias"
@@ -455,7 +445,6 @@ FROM platzi.alumnos AS a
 	FULL OUTER JOIN platzi.carreras AS c
 	ON a.carrera_id = c.id
 ORDER BY a.carrera_id;
-
 
 
 
@@ -531,7 +520,6 @@ ORDER BY c.id DESC;
 
 
 
-
 --Clase #12 "Triangulando"
 SELECT lpad('sql', 16, '*');
 --
@@ -571,7 +559,6 @@ FROM platzi.alumnos
 WHERE id < 10;
 
 
-
 --Clase #13 "Generando rangos"
 SELECT *
 FROM generate_series(1, 6);
@@ -605,14 +592,12 @@ ORDER BY a.carrera_id;
 
 
 --Ejercicios
-
 --Mi solucion
 SELECT rpad('*', a, '*')
 FROM generate_series(1, 16) AS s(a);
 --Solucion del curso
 SELECT lpad('*', CAST(ordinality AS int), '*')
 FROM generate_series(10, 2, -2) WITH ordinality;
-
 
 
 
@@ -624,3 +609,76 @@ WHERE email ~*'[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}';
 SELECT email
 FROM platzi.alumnos
 WHERE email ~*'[A-Z0-9._%+-]+@google[A-Z0-9.-]+\.[A-Z]{2,4}';
+
+
+
+--Clase #15 "Window functions"
+SELECT *,
+AVG(colegiatura) OVER (PARTITION BY carrera_id)
+FROM platzi.alumnos
+--
+SELECT *,
+AVG(colegiatura) OVER ()
+FROM platzi.alumnos
+--
+SELECT *,
+SUM(colegiatura) OVER (ORDER BY colegiatura)
+FROM platzi.alumnos
+--
+SELECT *,
+SUM(colegiatura) OVER (PARTITION BY carrera_id ORDER BY colegiatura)
+FROM platzi.alumnos
+--
+SELECT *,
+RANK() OVER (PARTITION BY carrera_id ORDER BY colegiatura DESC)
+FROM platzi.alumnos
+--
+SELECT *,
+RANK() OVER (PARTITION BY carrera_id ORDER BY colegiatura DESC) AS brand_rank
+FROM platzi.alumnos
+ORDER BY carrera_id, brand_rank
+--
+SELECT *
+FROM (
+	SELECT *,
+	RANK() OVER (PARTITION BY carrera_id ORDER BY colegiatura DESC) AS brand_rank
+	FROM platzi.alumnos
+) AS ranked_colegiaturas_por_carrera
+WHERE brand_rank < 3
+ORDER BY carrera_id, brand_rank
+
+
+
+--Clase #16 "Particiones y agregación"
+SELECT ROW_NUMBER() OVER() AS row_id, *
+FROM platzi.alumnos
+--
+SELECT ROW_NUMBER() OVER(ORDER BY fecha_incorporacion) AS row_id, *
+FROM platzi.alumnos
+--
+SELECT FIRST_VALUE(colegiatura) OVER() AS row_id, *
+FROM platzi.alumnos
+--
+SELECT FIRST_VALUE(colegiatura) OVER(PARTITION BY carrera_id) AS primera_colegiatura, *
+FROM platzi.alumnos
+--
+SELECT LAST_VALUE(colegiatura) OVER(PARTITION BY carrera_id) AS ultima_colegiatura, *
+FROM platzi.alumnos
+--
+SELECT NTH_VALUE(colegiatura, 3) OVER(PARTITION BY carrera_id) AS n_colegiatura, *
+FROM platzi.alumnos
+--
+SELECT *,
+	RANK() OVER(PARTITION BY carrera_id ORDER BY colegiatura DESC) AS colegiatura_rank
+FROM platzi.alumnos
+ORDER BY carrera_id, colegiatura_rank;
+--
+SELECT *,
+	DENSE_RANK() OVER(PARTITION BY carrera_id ORDER BY colegiatura DESC) AS colegiatura_rank
+FROM platzi.alumnos
+ORDER BY carrera_id, colegiatura_rank;
+--
+SELECT *, --(rank -1) / (total rows -1)
+	PERCENT_RANK() OVER(PARTITION BY carrera_id ORDER BY colegiatura DESC) AS colegiatura_rank
+FROM platzi.alumnos
+ORDER BY carrera_id, colegiatura_rank;
